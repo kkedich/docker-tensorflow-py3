@@ -1,13 +1,15 @@
 
 ### Docker tensorflow-py3
 
+---
+
 Docker that contains:
 
-+ Tensorflow
++ Tensorflow <your_tag>
 + [TensorFlow Probability](https://github.com/tensorflow/probability) (only in the GPU version)
 + [Sonnet](https://github.com/deepmind/sonnet) (only in the GPU version)
 + OpenCV (latest - build from source)
-+ FFMPEG (build from source)
++ FFMPEG (latest - build from source)
 + [gdrive](https://github.com/prasmussen/gdrive)
 + NLTK
 
@@ -22,6 +24,6 @@ In order to define the version of Tensorflow you can change the variable `TAG_VE
 Example: `TAG_VERSION_TF_GPU=1.11.0-gpu-py3` will build Tensorflow from the [tag](https://hub.docker.com/r/tensorflow/tensorflow/tags) tensorflow/tensorflow:1.11.0-gpu-py3
 
 
-##### References
+#### References
 
 + This repository is based on [docker-tensorflow-opencv3](https://github.com/so77id/docker-tensorflow-opencv3)
