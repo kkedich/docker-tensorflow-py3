@@ -1,8 +1,6 @@
 
 ### Docker tensorflow-py3
 
----
-
 Docker that contains:
 
 + Tensorflow <your_tag>
