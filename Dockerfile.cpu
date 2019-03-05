@@ -40,6 +40,8 @@ RUN apt-get -y update -qq && \
 RUN pip3 install scikit-image ggplot imageio
 RUN pip install numpy
 
+# Java
+RUN apt-get -y install default-jre
 
 # Get OpenCV
 RUN git clone https://github.com/opencv/opencv.git &&\

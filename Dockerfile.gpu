@@ -38,6 +38,9 @@ RUN apt-get -y update -qq && \
 
 RUN pip3 install scikit-image ggplot imageio
 
+# Java
+RUN apt-get -y install default-jre
+
 # Installing sonnet for the i3d model
 RUN pip3 install tensorflow-probability-gpu
 RUN pip3 install wrapt     # required for sonnet
