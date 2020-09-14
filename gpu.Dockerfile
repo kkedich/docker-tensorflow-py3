@@ -2,7 +2,11 @@ ARG  TAG_VERSION
 FROM tensorflow/tensorflow:${TAG_VERSION}
 MAINTAINER kbogdan
 
-ENV NUM_CORES 2
+# https://askubuntu.com/a/1013396
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LOCAL
+
+ENV NUM_CORES 8
 
 WORKDIR /
 
@@ -31,19 +35,11 @@ RUN apt-get -y update -qq && \
                        libdc1394-22-dev \
                        python3-tk \
                        vim \
-                       python3-h5py \
-                       python3-scipy \
-                       python-h5py \
-                       python-scipy
-
-
-RUN pip3 install scikit-image ggplot imageio
-RUN pip install numpy
-
-# Java
-RUN apt-get -y install default-jre
+                       default-jre  # Java
 
 # Get OpenCV
+# If installing a specific version is need add 'git checkout $OPENCV_VERSION'
+# after clonning and running the "cd" command
 RUN git clone https://github.com/opencv/opencv.git &&\
     cd opencv &&\
     cd / &&\
@@ -81,13 +77,6 @@ RUN git clone https://github.com/opencv/opencv.git &&\
     rm -r /opencv &&\
     rm -r /opencv_contrib
 
-# Install gdrive # ================================= 
-WORKDIR /tmp/
-
-RUN wget -O gdrive-linux-x64 "https://docs.google.com/uc?id=0B3X9GlR6EmbnQ0FtZmJJUXEyRTA&export=download" &&\ 
-    chmod +x gdrive-linux-x64 &&\
-    install gdrive-linux-x64 /usr/local/bin/gdrive
-
 WORKDIR /
 # ==================================================
 
@@ -104,6 +93,11 @@ RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /tmp/ffmp
 WORKDIR /
 WORKDIR /tmp/ffmpeg
 
+# Removing --enable-libnpp, is generating an error. Original line: (--enable-cuvid  --enable-libnpp)
+# probably will need an instalation of CUDA SDK
+# https://gitlab.com/nvidia/cuda/blob/ubuntu16.04/9.1/runtime/Dockerfile
+# https://trac.ffmpeg.org/ticket/6405
+
 # Compile and install ffmpeg from source
 RUN git clone https://github.com/FFmpeg/FFmpeg /tmp/ffmpeg && \
   cd /tmp/ffmpeg && ./configure \
@@ -111,7 +105,7 @@ RUN git clone https://github.com/FFmpeg/FFmpeg /tmp/ffmpeg && \
   --disable-shared \
   --enable-nvenc \
   --enable-cuda \
-  --enable-cuvid \
+  --enable-cuvid  \
   --extra-cflags=-I/usr/local/cuda/include \
   --extra-cflags=-I/usr/local/include \
   --extra-ldflags=-L/usr/local/cuda/lib64 && \
@@ -119,25 +113,15 @@ RUN git clone https://github.com/FFmpeg/FFmpeg /tmp/ffmpeg && \
   make install -j$NUM_CORES && \
   cd /tmp && rm -rf ffmpeg
 
-
 WORKDIR /
 # ===================================================
 
+RUN pip install --upgrade pip
 
-# Install packages for language model # =================================
-WORKDIR /
+# Install requirements
+COPY requirements.txt /tmp/
+RUN pip install --requirement /tmp/requirements.txt
 
-RUN pip3 install -U scikit-learn
-RUN pip3 install -U nltk
-
-#python -m nltk.downloader -d /usr/local/share/nltk_data all
-#https://github.com/heryandi/docker-python3-nltk-gensim/blob/master/Dockerfile
-RUN python3 -m nltk.downloader -d /usr/share/nltk_data punkt
-RUN python3 -m nltk.downloader -d /usr/share/nltk_data words
-
-RUN pip3 install --upgrade gensim
-
-WORKDIR /
 # =======================================================================
 
 # Cleaning temporary files and others
@@ -145,6 +129,24 @@ RUN apt-get autoclean autoremove &&\
     rm -rf /var/lib/apt/lists/* \
            /tmp/* \
            /var/tmp/*
+
+# User related arguments to be passed to the image
+ARG UID
+ARG GID
+ARG USER_NAME
+ARG GROUP
+
+RUN echo $UID
+RUN echo $GID
+RUN echo $USER_NAME
+RUN echo $GROUP
+
+# Adds the user information to the image
+RUN   groupadd --gid $GID $GROUP && \
+      useradd --create-home --shell /bin/bash --uid $UID --gid $GID $USER_NAME && \
+      adduser $USER_NAME sudo && \
+      su -l $USER
+USER $USER_NAME
 
 
 CMD ["/bin/bash"]
